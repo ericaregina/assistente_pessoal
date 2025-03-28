@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistente Pessoal Inteligente</title>
+  <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+  <div id="container">
+    <div id="assistente">
+      <h1>Assistente Pessoal da Erica</h1>
+      <button id="start-btn">Falar</button>
+      <p id="result"></p>
+    </div>
+  </div>
+
+  <script>
+    const startButton = document.getElementById('start-btn');
+    const resultDisplay = document.getElementById('result');
+
+   
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Desculpe, seu navegador não suporta a funcionalidade de reconhecimento de voz.');
+    } else {
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'pt-BR'; 
+      recognition.continuous = false; 
+      recognition.interimResults = false; 
+
+      
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        resultDisplay.textContent = `Você disse: ${transcript}`;
+
+      
+        if (transcript.includes('hora') || transcript.includes('que horas são')) {
+          const hora = new Date();
+          const horas = hora.getHours();
+          const minutos = hora.getMinutes();
+          const tempo = `Agora são ${horas}:${minutos}`;
+          resultDisplay.textContent += ' - ' + tempo;
+          falar(tempo);
+        } 
+        else if (transcript.includes('dia') || transcript.includes('que dia é hoje')) {
+          const dia = new Date();
+          const diasDaSemana = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+          const diaSemana = diasDaSemana[dia.getDay()];
+          const data = `Hoje é ${diaSemana}`;
+          resultDisplay.textContent += ' - ' + data;
+          falar(data);
+        } 
+        else if (transcript.includes('clima') || transcript.includes('como está o clima')) {
+          obterClima();
+        } 
+        else {
+          resultDisplay.textContent += ' - Desculpe, não entendi o comando.';
+          falar('Desculpe, não entendi o comando.');
+        }
+      };
+
+      
+      recognition.onerror = function(event) {
+        console.error('Erro de reconhecimento de voz:', event.error);
+        resultDisplay.textContent = 'Erro ao reconhecer sua fala. Tente novamente.';
+      };
+
+      
+      recognition.onend = function() {
+        console.log('Reconhecimento de voz finalizado.');
+      };
+
+      
+      startButton.addEventListener('click', function() {
+        console.log('Iniciando reconhecimento...');
+        recognition.start(); 
+      });
+    }
+
+    
+    function falar(texto) {
+      const utterance = new SpeechSynthesisUtterance(texto);
+      speechSynthesis.speak(utterance);
+    }
+
+    
+    async function obterClima() {
+      const apiKey = '74dd742bf8b34be4ada407d903f5a2c5';
+      const cidade = 'Blumenau'; 
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${apiKey}&lang=pt_br&units=metric`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.main) {
+          const temperatura = data.main.temp;
+          const clima = data.weather[0].description;
+          const resposta = `O clima em ${cidade} está ${clima} com temperatura de ${temperatura} graus Celsius.`;
+          resultDisplay.textContent += ' - ' + resposta;
+          falar(resposta);
+        } else {
+          resultDisplay.textContent += ' - Não foi possível obter o clima.';
+          falar('Não foi possível obter o clima.');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar o clima:', error);
+        resultDisplay.textContent += ' - Ocorreu um erro ao tentar obter o clima.';
+        falar('Ocorreu um erro ao tentar obter o clima.');
+      }
+    }
+  </script>
+</body>
+</html>
